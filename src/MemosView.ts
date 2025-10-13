@@ -160,7 +160,7 @@ export class MemosView extends ItemView {
 		// Add toggle view button
 		const toggleViewBtn = actionsEl.createEl('button', {
 			cls: 'memos-toggle-view-btn',
-			text: 'Markdown View'
+			text: 'md'
 		});
 		toggleViewBtn.addEventListener('click', async () => {
 			if (this.currentFile) {
@@ -180,7 +180,7 @@ export class MemosView extends ItemView {
 		// Add new card button with timestamp
 		const addCardBtn = actionsEl.createEl('button', {
 			cls: 'memos-add-card-btn',
-			text: '+ Add Card'
+			text: '+ Card'
 		});
 		addCardBtn.addEventListener('click', () => {
 			this.addNewCard();
@@ -189,7 +189,7 @@ export class MemosView extends ItemView {
 		// Add scroll to bottom button
 		const scrollToBottomBtn = actionsEl.createEl('button', {
 			cls: 'memos-scroll-to-bottom-btn',
-			text: '↓ Bottom'
+			text: '↓'
 		});
 		scrollToBottomBtn.addEventListener('click', () => {
 			this.scrollToBottom();
