@@ -2,6 +2,10 @@
 
 A card-based memo view plugin for Obsidian that displays markdown files with a configurable tag (default: `#memos`) as interactive cards with timestamps, checkboxes, and draft auto-save.
 
+## Screenshot
+
+![File Memos View](img/screenshot.png)
+
 ## Features
 
 ### Card-Based View
