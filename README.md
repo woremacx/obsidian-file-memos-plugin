@@ -48,6 +48,28 @@ A card-based memo view plugin for Obsidian that displays markdown files with a c
 - **Use Frontmatter Title**: Display title from frontmatter instead of filename
 - **Debug Logging**: Enable console debug logs for troubleshooting
 
+## Installation
+
+### Using BRAT (Beta Reviewers Auto-update Tester)
+
+This is the easiest way to install and test the plugin before it's available in the community plugins directory.
+
+1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from Obsidian's community plugins
+2. Open BRAT settings in Obsidian
+3. Click "Add Beta plugin"
+4. Enter the repository URL: `woremacx/obsidian-file-memos-plugin`
+5. Click "Add Plugin"
+6. Enable "File Memos View" in Settings → Community plugins
+
+BRAT will automatically check for updates and keep the plugin up to date.
+
+### Manual Installation
+
+1. Download the latest release from the [Releases page](https://github.com/woremacx/obsidian-file-memos-plugin/releases)
+2. Extract `main.js`, `manifest.json`, and `styles.css` to `VaultFolder/.obsidian/plugins/obsidian-file-memos/`
+3. Reload Obsidian
+4. Enable "File Memos View" in Settings → Community plugins
+
 ## Usage
 
 ### Basic Usage
