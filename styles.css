@@ -1,8 +1,785 @@
-/*
+/* Memos View Container */
+.memos-view-container {
+	padding: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Header */
+.memos-header {
+	flex-shrink: 0;
+	padding: 20px;
+	margin-bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background-color: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
 
-If your plugin does not need CSS, delete this file.
+.memos-header h1 {
+	margin: 0;
+	font-size: 24px;
+	font-weight: 600;
+}
 
-*/
+.memos-header-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.memos-toggle-view-btn {
+	background-color: var(--background-modifier-border);
+	color: var(--text-normal);
+	border: none;
+	border-radius: 6px;
+	padding: 8px 16px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background-color 0.2s;
+}
+
+.memos-toggle-view-btn:hover {
+	background-color: var(--background-modifier-border-hover);
+}
+
+.memos-add-card-btn {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 6px;
+	padding: 8px 16px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background-color 0.2s;
+}
+
+.memos-add-card-btn:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* Quick Input Container */
+.memos-quick-input-container {
+	margin: 20px 20px 0 20px;
+	background-color: var(--background-primary);
+	border: 2px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 12px;
+	transition: border-color 0.2s, box-shadow 0.2s;
+	min-height: 60px;
+}
+
+.memos-quick-input-container:focus-within {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* Hide inline-title and properties in quick input container */
+/* Use visibility + height instead of display:none to preserve editor functionality */
+.memos-quick-input-container .inline-title {
+	visibility: hidden !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	pointer-events: none !important;
+}
+
+.memos-quick-input-container .metadata-container {
+	visibility: hidden !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	pointer-events: none !important;
+}
+
+/* Bottom Quick Input Container */
+.memos-quick-input-bottom {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+/* Embedded Editor Styles */
+.memos-quick-input-container .cm-editor {
+	background-color: transparent;
+	font-family: var(--font-text);
+	font-size: 15px;
+	line-height: 1.6;
+}
+
+.memos-quick-input-container .cm-scroller {
+	min-height: 48px;
+	max-height: 300px;
+	overflow-y: auto;
+	transition: min-height 0.2s ease;
+}
+
+/* Expand editor height when focused */
+.memos-quick-input-container:focus-within .cm-scroller {
+	min-height: 120px;
+}
+
+.memos-quick-input-container .cm-content {
+	padding: 0;
+	color: var(--text-normal);
+}
+
+.memos-quick-input-container .cm-line {
+	padding: 0 4px;
+}
+
+/* Fallback Textarea (if editor creation fails) */
+.memos-quick-input {
+	width: 100%;
+	min-height: 48px;
+	max-height: 300px;
+	padding: 8px;
+	border: none;
+	background-color: transparent;
+	color: var(--text-normal);
+	font-family: var(--font-text);
+	font-size: 15px;
+	line-height: 1.6;
+	resize: none;
+	overflow-y: auto;
+}
+
+.memos-quick-input:focus {
+	outline: none;
+}
+
+.memos-quick-input::placeholder {
+	color: var(--text-muted);
+	opacity: 0.6;
+}
+
+/* Quick Input Actions (Save Button) */
+.memos-quick-input-actions {
+	margin: 8px 20px 0 20px;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.memos-quick-input-save-btn {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 6px;
+	padding: 6px 16px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background-color 0.2s;
+}
+
+.memos-quick-input-save-btn:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* Scrollable Content Area (everything below header) */
+.memos-view-container > *:not(.memos-header) {
+	flex-shrink: 0;
+}
+
+/* Cards Container */
+.memos-cards {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 0 20px;
+	margin-top: 20px;
+}
+
+/* Individual Card - Thino Style */
+.memos-card {
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 12px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.memos-card:hover {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	transform: translateY(-2px);
+}
+
+.memos-card-checked {
+	opacity: 0.6;
+	background-color: var(--background-secondary);
+}
+
+/* Card Header */
+.memos-card-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.memos-card-checkbox {
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.memos-collapse-btn {
+	background: none;
+	border: none;
+	padding: 2px;
+	cursor: pointer;
+	color: var(--text-muted);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.memos-collapse-btn:hover {
+	color: var(--text-normal);
+}
+
+.memos-collapse-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+
+.memos-card-info {
+	color: var(--text-muted);
+	font-size: 12px;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.memos-edit-btn {
+	background: none;
+	border: none;
+	padding: 2px;
+	cursor: pointer;
+	color: var(--text-muted);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.memos-edit-btn:hover {
+	color: var(--interactive-accent);
+}
+
+.memos-edit-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+.memos-delete-btn {
+	background: none;
+	border: none;
+	padding: 2px;
+	cursor: pointer;
+	color: var(--text-muted);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.memos-delete-btn:hover {
+	color: var(--text-error);
+}
+
+.memos-delete-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+.memos-card-content {
+	color: var(--text-normal);
+	line-height: 1.6;
+}
+
+.memos-card-content.collapsed {
+	display: none;
+}
+
+/* Heading Cards */
+.memos-card-heading {
+	border-left: 4px solid var(--interactive-accent);
+}
+
+.memos-heading {
+	margin: 0;
+	color: var(--text-normal);
+	font-weight: 600;
+}
+
+/* Paragraph Cards */
+.memos-paragraph {
+	color: var(--text-normal);
+}
+
+.memos-paragraph strong {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.memos-paragraph em {
+	font-style: italic;
+}
+
+.memos-paragraph code {
+	background-color: var(--code-background);
+	color: var(--code-normal);
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+}
+
+.memos-paragraph a {
+	color: var(--link-color);
+	text-decoration: none;
+}
+
+.memos-paragraph a:hover {
+	text-decoration: underline;
+}
+
+/* Code Block Cards */
+.memos-card-code-block {
+	background-color: var(--background-secondary);
+}
+
+.memos-code-block-container {
+	position: relative;
+}
+
+.memos-code-language {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	font-size: 11px;
+	color: var(--text-muted);
+	background-color: var(--background-modifier-border);
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+}
+
+.memos-code-block-container pre {
+	margin: 0;
+	padding: 12px;
+	background-color: var(--code-background);
+	border-radius: 4px;
+	overflow-x: auto;
+}
+
+.memos-code-block-container code {
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+	color: var(--code-normal);
+}
+
+/* List Cards */
+.memos-list-container {
+	padding-left: 4px;
+}
+
+.memos-list-item {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 6px;
+	gap: 8px;
+}
+
+.memos-list-bullet {
+	color: var(--text-muted);
+	flex-shrink: 0;
+	min-width: 20px;
+}
+
+.memos-list-text {
+	color: var(--text-normal);
+	flex: 1;
+}
+
+.memos-task-checkbox {
+	margin-top: 3px;
+	flex-shrink: 0;
+}
+
+.memos-task-checked {
+	text-decoration: line-through;
+	color: var(--text-muted);
+}
+
+.memos-task-unchecked {
+	color: var(--text-normal);
+}
+
+/* Blockquote Cards */
+.memos-card-blockquote {
+	border-left: 4px solid var(--blockquote-border);
+	background-color: var(--background-secondary);
+}
+
+.memos-blockquote {
+	margin: 0;
+	padding: 0;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* Divider Cards */
+.memos-card-divider {
+	padding: 8px 16px;
+	background-color: transparent;
+	border: none;
+	box-shadow: none;
+}
+
+.memos-card-divider:hover {
+	transform: none;
+	box-shadow: none;
+}
+
+.memos-divider {
+	border: none;
+	border-top: 2px solid var(--background-modifier-border);
+	margin: 0;
+}
+
+/* Empty State */
+.memos-empty-state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--text-muted);
+	font-size: 16px;
+}
+
+/* Note/Info */
+.memos-note {
+	margin: 24px 20px 20px 20px;
+	padding: 12px;
+	background-color: var(--background-secondary);
+	border-left: 4px solid var(--interactive-accent);
+	border-radius: 4px;
+	color: var(--text-muted);
+	font-size: 14px;
+}
+
+/* Edit Mode */
+.memos-editing {
+	padding: 8px;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+}
+
+/* Card Editor Container */
+.memos-card-editor-container {
+	margin-bottom: 8px;
+	background-color: var(--background-primary);
+	border: 2px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 8px;
+	transition: border-color 0.2s;
+}
+
+.memos-card-editor-container:focus-within {
+	border-color: var(--interactive-accent);
+}
+
+/* Hide inline-title and properties in card editor */
+.memos-card-editor-container .inline-title {
+	visibility: hidden !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	pointer-events: none !important;
+}
+
+.memos-card-editor-container .metadata-container {
+	visibility: hidden !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	pointer-events: none !important;
+}
+
+/* Card Editor CodeMirror Styles */
+.memos-card-editor-container .cm-editor {
+	background-color: transparent;
+	font-family: var(--font-monospace);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+.memos-card-editor-container .cm-scroller {
+	min-height: 100px;
+	max-height: 500px;
+	overflow-y: auto;
+}
+
+.memos-card-editor-container .cm-content {
+	padding: 4px;
+	color: var(--text-normal);
+}
+
+/* Fallback Textarea (if editor creation fails) */
+.memos-edit-textarea {
+	width: 100%;
+	min-height: 100px;
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	font-family: var(--font-monospace);
+	font-size: 14px;
+	line-height: 1.6;
+	resize: vertical;
+	margin-bottom: 8px;
+}
+
+.memos-edit-textarea:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.memos-edit-buttons {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.memos-edit-save,
+.memos-edit-cancel {
+	padding: 6px 12px;
+	border: none;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.memos-edit-save {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.memos-edit-save:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.memos-edit-cancel {
+	background-color: var(--background-modifier-border);
+	color: var(--text-normal);
+}
+
+.memos-edit-cancel:hover {
+	background-color: var(--background-modifier-border-hover);
+}
+
+/* Drag and Drop States */
+.memos-dragging {
+	opacity: 0.4;
+	border: 2px dashed var(--interactive-accent);
+	transform: scale(0.95);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.memos-drag-over-top {
+	position: relative;
+}
+
+.memos-drag-over-top::before {
+	content: '';
+	position: absolute;
+	top: -6px;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background-color: var(--interactive-accent);
+	border-radius: 2px;
+	box-shadow: 0 0 8px var(--interactive-accent);
+	z-index: 10;
+}
+
+.memos-drag-over-bottom {
+	position: relative;
+}
+
+.memos-drag-over-bottom::after {
+	content: '';
+	position: absolute;
+	bottom: -6px;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background-color: var(--interactive-accent);
+	border-radius: 2px;
+	box-shadow: 0 0 8px var(--interactive-accent);
+	z-index: 10;
+}
+
+/* Make drag handle more visible */
+.memos-drag-handle {
+	background: none;
+	border: none;
+	padding: 4px;
+	cursor: grab;
+	color: var(--text-faint);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	opacity: 0.5;
+	transition: opacity 0.2s, color 0.2s;
+}
+
+.memos-card:hover .memos-drag-handle {
+	opacity: 1;
+	color: var(--text-muted);
+}
+
+.memos-drag-handle:hover {
+	color: var(--text-normal);
+	opacity: 1;
+}
+
+.memos-drag-handle:active {
+	cursor: grabbing;
+	color: var(--interactive-accent);
+}
+
+.memos-drag-handle svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Table Styles - Match Obsidian's default markdown view */
+.memos-block-content table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 1em 0;
+}
+
+.memos-block-content table thead {
+	border-bottom: 2px solid var(--background-modifier-border);
+}
+
+.memos-block-content table th {
+	font-weight: 600;
+	text-align: left;
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--table-header-background);
+}
+
+.memos-block-content table td {
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.memos-block-content table tr {
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.memos-block-content table tbody tr:hover {
+	background-color: var(--table-row-background-hover);
+}
+
+/* Confirmation Modal */
+.memos-confirm-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.memos-confirm-content {
+	background-color: var(--background-primary);
+	border-radius: 8px;
+	padding: 24px;
+	max-width: 400px;
+	width: 90%;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.memos-confirm-content h3 {
+	margin: 0 0 12px 0;
+	color: var(--text-normal);
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.memos-confirm-content p {
+	margin: 0 0 20px 0;
+	color: var(--text-muted);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.memos-confirm-buttons {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+}
+
+.memos-confirm-cancel,
+.memos-confirm-delete {
+	padding: 8px 16px;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.memos-confirm-cancel {
+	background-color: var(--background-modifier-border);
+	color: var(--text-normal);
+}
+
+.memos-confirm-cancel:hover {
+	background-color: var(--background-modifier-border-hover);
+}
+
+.memos-confirm-delete {
+	background-color: var(--text-error);
+	color: white;
+}
+
+.memos-confirm-delete:hover {
+	opacity: 0.9;
+}

@@ -1,94 +1,150 @@
-# Obsidian Sample Plugin
+# File Memos View for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+A card-based memo view plugin for Obsidian that displays markdown files with a configurable tag (default: `#memos`) as interactive cards with timestamps, checkboxes, and draft auto-save.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+### Card-Based View
+- Automatically displays files tagged with `#memos` (configurable) as interactive cards
+- Each H2 heading becomes a separate card with its content
+- Thino-style visual design for an elegant memo experience
+- Toggle between Memos View and standard Markdown view
 
-## First time developing plugins?
+### Interactive Cards
+- **Timestamps**: Each card displays creation time in the format `YYYY-MM-DD HH:mm`
+- **Checkboxes**: Mark cards as complete/incomplete with checkbox toggles
+- **Collapse/Expand**: Fold individual cards to reduce clutter
+- **Drag & Drop**: Reorder cards by dragging the grip handle
+- **Edit Mode**: Edit card content inline with rich markdown support
+- **Delete Cards**: Remove cards with confirmation dialog
 
-Quick starting guide for new plugin devs:
+### Quick Add with Draft Auto-Save
+- Quick input field at the bottom for adding new memos
+- Automatic draft saving after 1 second of typing
+- Draft cards are marked with `%%quickadd-draft%%` and excluded from view
+- Convert draft to permanent card by clicking "Save"
+- Empty drafts are automatically deleted
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+### Rich Markdown Support
+- Full Obsidian markdown rendering
+- Code blocks with syntax highlighting
+- Task lists with interactive checkboxes
+- Tables, blockquotes, and all standard markdown elements
+- Image embeds and internal links
+- Heading level adjustment to prevent draft block parsing issues
 
-## Releasing new releases
+### Smart State Management
+- Card collapse states persisted to both file and localStorage
+- Checkbox states saved directly to markdown
+- Real-time sync with external file changes
+- Prevents reload during editing
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### Settings
+- **Memos Tag**: Customize the trigger tag (default: `memos`)
+- **Use Frontmatter Title**: Display title from frontmatter instead of filename
+- **Debug Logging**: Enable console debug logs for troubleshooting
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Usage
 
-## Adding your plugin to the community plugin list
+### Basic Usage
+1. Create a markdown file and add `#memos` tag anywhere in the file (or in frontmatter)
+2. Open the file - it will automatically display in Memos View
+3. Add cards using the "Add Card" button or quick input at the bottom
+4. Interact with cards: check, collapse, edit, reorder, or delete
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+### Markdown Format
+```markdown
+---
+tags: [memos]
+title: My Daily Notes
+---
 
-## How to use
+## 2025-10-13 14:30 ^abc123
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+First memo content here.
+Can include **markdown** and more.
 
-## Manually installing the plugin
+## 2025-10-13 15:45 [x] ^def456 [collapsed:: true]
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+Completed task memo with collapsed state.
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint ./src/`
+## 2025-10-13 16:20 ^ghi789 %%quickadd-draft%%
 
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+This is a draft memo (won't show as card).
 ```
 
-If you have multiple URLs, you can also do:
+### File Structure
+Each card is an H2 heading with:
+- Timestamp in format `YYYY-MM-DD HH:mm`
+- Optional checkbox: `[ ]` or `[x]`
+- Block ID for tracking: `^blockid`
+- Optional collapsed state: `[collapsed:: true]`
+- Optional draft flag: `%%quickadd-draft%%`
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+## Installation
+
+### Manual Installation
+1. Download the latest release
+2. Extract files to `VaultFolder/.obsidian/plugins/obsidian-file-memos/`
+3. Reload Obsidian
+4. Enable "File Memos View" in Settings → Community plugins
+
+### Development
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/obsidian-file-memos-plugin.git
+
+# Install dependencies
+npm install
+
+# Start dev mode with hot reload
+npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
 ```
 
-## API Documentation
+## Architecture
 
-See https://github.com/obsidianmd/obsidian-api
+### Key Components
+- **MemosView** (`src/MemosView.ts`): Main view component managing the card display
+- **CardComponent** (`src/CardComponent.ts`): Individual card rendering and interactions
+- **MarkdownParser** (`src/MarkdownParser.ts`): Parses markdown into block structures
+- **EmbeddableMarkdownEditor** (`src/EmbeddableMarkdownEditor.ts`): CodeMirror-based editor component
+- **main.ts**: Plugin entry point with settings and view registration
+
+### Features Implemented
+- [x] Tag-based view switching (`#memos`)
+- [x] Card-based display with timestamps
+- [x] Checkbox toggles for cards
+- [x] Collapse/expand cards
+- [x] Drag & drop reordering
+- [x] Inline editing with markdown support
+- [x] Quick add with draft auto-save
+- [x] Delete cards with confirmation
+- [x] State persistence (collapse states)
+- [x] Settings panel
+- [x] External file change detection
+- [x] Rich markdown rendering (code, tables, images, links)
+- [x] Heading level adjustment in drafts
+- [x] Test coverage for core functionality
+
+## Commands
+
+- **Toggle Memos View**: Switch between Memos View and Markdown view
+
+## Requirements
+
+- Obsidian v0.15.0 or higher
+- Node.js v16 or higher (for development)
+
+## License
+
+MIT
+
+## Credits
+
+Inspired by the Thino (formerly Memos) plugin's card-based interface.
