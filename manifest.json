@@ -1,10 +1,10 @@
 {
 	"id": "obsidian-file-memos",
 	"name": "File Memos View",
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"minAppVersion": "0.15.0",
 	"description": "Display #memos tagged files as Thino-style card view with timestamps and checkboxes.",
-	"author": "k",
-	"authorUrl": "",
+	"author": "woremacx",
+	"authorUrl": "https://github.com/woremacx/obsidian-file-memos-plugin",
 	"isDesktopOnly": false
 }
