@@ -113,7 +113,8 @@ export class MemosView extends ItemView {
 		this.isRendering = true;
 
 		try {
-			const container = this.containerEl.children[1];
+			// Use contentEl which is the proper content container for this view
+			const container = this.contentEl;
 			container.empty();
 			container.addClass('memos-view-container');
 			Logger.debug('[MemosView.renderMemosView] Container prepared');
@@ -1028,9 +1029,14 @@ export class MemosView extends ItemView {
 
 		// Stop watching file
 		this.stopWatchingFile();
+
 		// Cleanup card components
 		this.cardComponents.forEach(card => card.destroy());
 		this.cardComponents = [];
+
+		// Clear the content container
+		this.contentEl.empty();
+
 		Logger.debug('[MemosView.onClose] Cleanup complete');
 	}
 
