@@ -314,6 +314,11 @@
 	line-height: 1.6;
 }
 
+/* Override Obsidian's default markdown-preview-view padding */
+.memos-card-content .markdown-preview-view {
+	padding: 10px !important;
+}
+
 .memos-card-content.collapsed {
 	display: none;
 }

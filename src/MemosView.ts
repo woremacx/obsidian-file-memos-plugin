@@ -23,8 +23,6 @@ export class MemosView extends ItemView {
 	private editingBlockId: string | null = null; // ID of block currently being edited
 	private isInternalModification: boolean = false; // Flag to track internal file modifications
 	private isRendering: boolean = false; // Flag to prevent concurrent renders
-	private autoSaveTimeout: number | null = null; // Timeout for auto-save debounce
-	private draftBlockId: string | null = null; // Track the current draft block ID
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -205,25 +203,10 @@ export class MemosView extends ItemView {
 		// Create a card for each block (skip empty blocks)
 		// Detect draft blocks but don't create cards for them
 		let blockIndex = 0;
-		let draftCardIndex: number | null = null;
-
-		// Find draft block first
-		const draftBlock = blocks.find(b => b.type !== BlockType.EMPTY && b.isDraft);
-		if (draftBlock) {
-			this.draftBlockId = draftBlock.id || null;
-			Logger.debug('[MemosView.renderMemosView] Draft block detected, ID:', this.draftBlockId);
-		}
 
 		blocks.forEach((block, index) => {
 			if (block.type === BlockType.EMPTY) {
 				return; // Skip empty blocks
-			}
-
-			// Skip creating card for draft blocks
-			if (block.isDraft) {
-				draftCardIndex = blockIndex;
-				blockIndex++;
-				return;
 			}
 
 			// Initialize card state from markdown if collapsed state is present
@@ -276,45 +259,25 @@ export class MemosView extends ItemView {
 			{
 				app: this.app,
 				placeholder: "What's on your mind?",
-				onChange: (editor, value) => {
-					this.handleQuickInputChange(value);
+				preventAutoFocus: true, // Prevent auto-focus on initial render
+				onBlur: (editor) => {
+					// Auto-save as final card when focus is lost
+					const content = editor.getValue().trim();
+					if (content) {
+						this.handleQuickInput();
+					}
 				}
 			}
 		);
 
-		// Handle draft block: restore content to quick input editor after it's created
-		if (draftBlock && this.quickInputEditor) {
-			Logger.debug('[MemosView.renderMemosView] Restoring draft content to quick input');
-
-			// Extract content (remove timestamp heading)
-			const contentLines = draftBlock.content.split('\n\n');
-			const contentWithoutHeading = contentLines.slice(1).join('\n\n');
-
-			// Set editor value
-			this.quickInputEditor.setValue(contentWithoutHeading);
-		}
-
-		// Create save button container below the input
-		const quickInputActionsEl = container.createEl('div', {
-			cls: 'memos-quick-input-actions'
+		// Add info note
+		const noteEl = container.createEl('div', {
+			cls: 'memos-note',
+			text: `Memos View: Displaying ${this.cardComponents.length} cards.`
 		});
-
-		const saveBtn = quickInputActionsEl.createEl('button', {
-			cls: 'memos-quick-input-save-btn',
-			text: 'Save'
-		});
-		saveBtn.addEventListener('click', () => {
-			this.handleQuickInput();
-		});
-
-			// Add info note
-			const noteEl = container.createEl('div', {
-				cls: 'memos-note',
-				text: `Memos View: Displaying ${this.cardComponents.length} cards.`
-			});
-		} finally {
-			this.isRendering = false;
-		}
+	} finally {
+		this.isRendering = false;
+	}
 	}
 
 	private generateBlockId(): string {
@@ -372,113 +335,6 @@ export class MemosView extends ItemView {
 		}).join('\n');
 	}
 
-	private handleQuickInputChange(value: string): void {
-		// Clear existing timeout
-		if (this.autoSaveTimeout !== null) {
-			window.clearTimeout(this.autoSaveTimeout);
-		}
-
-		// If empty, delete draft block if exists
-		if (!value.trim()) {
-			if (this.draftBlockId) {
-				Logger.debug('[MemosView.handleQuickInputChange] Empty input, will delete draft block');
-				this.autoSaveTimeout = window.setTimeout(() => {
-					this.deleteDraftBlock(this.draftBlockId!);
-					this.draftBlockId = null;
-				}, 1000);
-			}
-			return;
-		}
-
-		// Debounce: save after 1 second of no typing
-		this.autoSaveTimeout = window.setTimeout(() => {
-			this.autoSaveDraft(value);
-		}, 1000);
-	}
-
-	private async autoSaveDraft(content: string): Promise<void> {
-		if (!this.currentFile) return;
-
-		Logger.debug('[MemosView.autoSaveDraft] Auto-saving draft');
-
-		// Read current file content
-		const currentContent = await this.app.vault.read(this.currentFile);
-		const blocks = MarkdownParser.parse(currentContent);
-		const nonEmptyBlocks = blocks.filter(b => b.type !== BlockType.EMPTY);
-
-		// Check if draft block already exists
-		const existingDraftIndex = nonEmptyBlocks.findIndex(b => b.id === this.draftBlockId);
-
-		if (existingDraftIndex >= 0) {
-			// Update existing draft block
-			Logger.debug('[MemosView.autoSaveDraft] Updating existing draft block:', this.draftBlockId);
-			const existingBlock = nonEmptyBlocks[existingDraftIndex];
-
-			// Before saving, adjust heading levels in draft content
-			content = this.adjustHeadingLevelsInDraft(content);
-
-			// Parse the new content
-			const timestamp = formatTimestamp(new Date(), 'YYYY-MM-DD HH:mm');
-			const newBlock = MarkdownParser.parse(`## ${timestamp}\n\n${content}`)[0];
-
-			if (newBlock) {
-				// Preserve block ID and draft flag
-				newBlock.id = existingBlock.id;
-				newBlock.isDraft = true;
-				newBlock.checked = existingBlock.checked;
-
-				// Update the block
-				nonEmptyBlocks[existingDraftIndex] = newBlock;
-
-				// Reconstruct and save
-				const newContent = this.reconstructMarkdown(nonEmptyBlocks);
-				this.isInternalModification = true;
-				await this.app.vault.modify(this.currentFile, newContent);
-			}
-		} else {
-			// Create new draft block
-			Logger.debug('[MemosView.autoSaveDraft] Creating new draft block');
-			const timestamp = formatTimestamp(new Date(), 'YYYY-MM-DD HH:mm');
-			const blockId = this.generateBlockId();
-
-			// Store the block ID
-			this.draftBlockId = blockId;
-
-			// Before saving, adjust heading levels in draft content
-			content = this.adjustHeadingLevelsInDraft(content);
-
-			let fileContent = await this.app.vault.read(this.currentFile);
-			if (fileContent && !fileContent.endsWith('\n')) {
-				fileContent += '\n';
-			}
-
-			const newBlockMarkdown = `\n## ${timestamp} ^${blockId} %%quickadd-draft%%\n\n${content}\n`;
-			this.isInternalModification = true;
-			await this.app.vault.modify(this.currentFile, fileContent + newBlockMarkdown);
-		}
-	}
-
-	private async deleteDraftBlock(blockId: string): Promise<void> {
-		if (!this.currentFile) return;
-
-		Logger.debug('[MemosView.deleteDraftBlock] Deleting draft block:', blockId);
-
-		// Read current file content
-		const currentContent = await this.app.vault.read(this.currentFile);
-		const blocks = MarkdownParser.parse(currentContent);
-		const nonEmptyBlocks = blocks.filter(b => b.type !== BlockType.EMPTY);
-
-		// Find and remove the draft block
-		const updatedBlocks = nonEmptyBlocks.filter(b => b.id !== blockId);
-
-		if (updatedBlocks.length < nonEmptyBlocks.length) {
-			// Reconstruct and save
-			const newContent = this.reconstructMarkdown(updatedBlocks);
-			this.isInternalModification = true;
-			await this.app.vault.modify(this.currentFile, newContent);
-		}
-	}
-
 	private scrollToBottom(): void {
 		// Scroll to the bottom of the view
 		const container = this.containerEl.children[1] as HTMLElement;
@@ -493,20 +349,13 @@ export class MemosView extends ItemView {
 	private async addNewCard(): Promise<void> {
 		if (!this.currentFile) return;
 
-		const timestamp = formatTimestamp(new Date(), 'YYYY-MM-DD HH:mm');
-		const blockId = this.generateBlockId();
-		let currentContent = await this.app.vault.read(this.currentFile);
+		// Scroll to bottom and focus on quick input instead of creating empty card
+		this.scrollToBottom();
 
-		// Ensure current content ends with newline before appending
-		if (currentContent && !currentContent.endsWith('\n')) {
-			currentContent += '\n';
+		// Focus on the quick input editor
+		if (this.quickInputEditor) {
+			this.quickInputEditor.focus();
 		}
-
-		const newContent = `\n## ${timestamp} ^${blockId}\n\n`;
-		await this.app.vault.modify(this.currentFile, currentContent + newContent);
-
-		// Reload view
-		await this.renderMemosView(this.currentFile);
 	}
 
 	private async handleQuickInput(): Promise<void> {
@@ -515,45 +364,29 @@ export class MemosView extends ItemView {
 		let content = this.quickInputEditor.getValue().trim();
 		if (!content) return; // Prevent empty submission
 
-		// Clear auto-save timeout
-		if (this.autoSaveTimeout !== null) {
-			window.clearTimeout(this.autoSaveTimeout);
-			this.autoSaveTimeout = null;
-		}
-
 		// Read current file content
 		const currentContent = await this.app.vault.read(this.currentFile);
 		const blocks = MarkdownParser.parse(currentContent);
 		const nonEmptyBlocks = blocks.filter(b => b.type !== BlockType.EMPTY);
 
-		// If draft block exists, remove it (we'll create a confirmed block)
-		let updatedBlocks = nonEmptyBlocks;
-		if (this.draftBlockId) {
-			updatedBlocks = nonEmptyBlocks.filter(b => b.id !== this.draftBlockId);
-			Logger.debug('[MemosView.handleQuickInput] Removing draft block:', this.draftBlockId);
-		}
-
 		// Before saving, adjust heading levels in content
 		content = this.adjustHeadingLevelsInDraft(content);
 
-		// Generate timestamp and block ID for confirmed block
+		// Generate timestamp and block ID for new block
 		const timestamp = formatTimestamp(new Date(), 'YYYY-MM-DD HH:mm');
 		const blockId = this.generateBlockId();
 
-		// Parse new confirmed block (without draft flag)
+		// Parse new block
 		const newBlock = MarkdownParser.parse(`## ${timestamp} ^${blockId}\n\n${content}`)[0];
 		if (newBlock) {
 			newBlock.id = blockId;
-			updatedBlocks.push(newBlock);
+			nonEmptyBlocks.push(newBlock);
 
 			// Reconstruct and save
-			const newContent = this.reconstructMarkdown(updatedBlocks);
+			const newContent = this.reconstructMarkdown(nonEmptyBlocks);
 			this.isInternalModification = true;
 			await this.app.vault.modify(this.currentFile, newContent);
 		}
-
-		// Clear draft block ID
-		this.draftBlockId = null;
 
 		// Clear input
 		this.quickInputEditor.clear();
@@ -561,7 +394,7 @@ export class MemosView extends ItemView {
 		// Add card component without full reload
 		if (newBlock) {
 			const blockIndex = this.cardComponents.length;
-			const cardsContainer = this.containerEl.querySelector('.memos-cards');
+			const cardsContainer = this.contentEl.querySelector('.memos-cards');
 
 			if (cardsContainer) {
 				const card = new CardComponent(
@@ -793,12 +626,6 @@ export class MemosView extends ItemView {
 			newBlock.id = existingBlock.id;
 			newBlock.checked = existingBlock.checked;
 
-			// Remove draft flag when editing is confirmed
-			if (existingBlock.isDraft) {
-				Logger.debug('[MemosView.onCardEdit] Removing draft flag from block');
-				newBlock.isDraft = undefined;
-			}
-
 			// Update the block
 			nonEmptyBlocks[blockIndex] = newBlock;
 		}
@@ -926,11 +753,6 @@ export class MemosView extends ItemView {
 							headingParts.push(`[collapsed:: ${block.collapsed}]`);
 						}
 
-						// Add draft flag if present
-						if (block.isDraft) {
-							headingParts.push('%%quickadd-draft%%');
-						}
-
 						const headingLine = headingParts.join(' ');
 
 						// Return heading + body (if exists)
@@ -1015,12 +837,6 @@ export class MemosView extends ItemView {
 	async onClose(): Promise<void> {
 		Logger.debug('[MemosView.onClose] Called');
 
-		// Clear auto-save timeout
-		if (this.autoSaveTimeout !== null) {
-			window.clearTimeout(this.autoSaveTimeout);
-			this.autoSaveTimeout = null;
-		}
-
 		// Destroy editor if it exists
 		if (this.quickInputEditor) {
 			this.quickInputEditor.destroy();
@@ -1050,7 +866,6 @@ export class MemosView extends ItemView {
 
 		this.fileModifyHandler = this.app.vault.on('modify', (file) => {
 			if (file === this.currentFile) {
-				Logger.debug('[MemosView] File modified externally:', file.path);
 				this.handleExternalFileChange();
 			}
 		});
@@ -1084,10 +899,7 @@ export class MemosView extends ItemView {
 
 		// If editing a card or quick input has content, skip reload
 		if (this.editingBlockId || hasQuickInputContent) {
-			Logger.debug('[MemosView.handleExternalFileChange] Skipping reload - editing in progress', {
-				editingBlockId: this.editingBlockId,
-				hasQuickInputContent: hasQuickInputContent
-			});
+			Logger.debug('[MemosView.handleExternalFileChange] Skipping reload - editing in progress');
 			return;
 		}
 

@@ -8,6 +8,7 @@ export interface EmbeddableMarkdownEditorOptions {
     app: App;
     placeholder?: string;
     initialValue?: string;
+    preventAutoFocus?: boolean;
     onEnter?: (editor: EmbeddableMarkdownEditor) => void;
     onEscape?: (editor: EmbeddableMarkdownEditor) => void;
     onSubmit?: (editor: EmbeddableMarkdownEditor) => void;
@@ -140,12 +141,25 @@ export class EmbeddableMarkdownEditor {
 
             // Make it editable
             widgetEditorView.editable = true;
+            // showEditor() initializes the editor display and automatically focuses it
             if (widgetEditorView.showEditor) {
                 widgetEditorView.showEditor();
             }
 
             // Store the editor reference
             this.editor = widgetEditorView.editor;
+
+            // If auto-focus should be prevented, blur immediately after initialization
+            if (this.options.preventAutoFocus && this.editor) {
+                // Use setTimeout to ensure blur happens after focus
+                setTimeout(() => {
+                    if (this.editor && typeof this.editor.blur === 'function') {
+                        this.editor.blur();
+                    } else if (this.editor.cm && this.editor.cm.dom) {
+                        this.editor.cm.dom.blur();
+                    }
+                }, 0);
+            }
 
             if (!this.editor) {
                 Logger.error('[EmbeddableMarkdownEditor] WidgetEditorView has no editor');
@@ -188,6 +202,30 @@ export class EmbeddableMarkdownEditor {
                     }
                 } catch (e) {
                     Logger.warn('[EmbeddableMarkdownEditor] Could not setup change listener:', e);
+                }
+            }
+
+            // Setup blur listener if provided
+            if (this.options.onBlur) {
+                try {
+                    if (this.editor.cm && this.editor.cm.dom) {
+                        const cm = this.editor.cm;
+
+                        // Use focusout event which bubbles (unlike blur)
+                        const focusoutHandler = () => {
+                            if (this.options.onBlur) {
+                                this.options.onBlur(this);
+                            }
+                        };
+
+                        cm.dom.addEventListener('focusout', focusoutHandler);
+
+                        this.component.register(() => {
+                            cm.dom.removeEventListener('focusout', focusoutHandler);
+                        });
+                    }
+                } catch (e) {
+                    Logger.warn('[EmbeddableMarkdownEditor] Could not setup blur listener:', e);
                 }
             }
 
@@ -288,6 +326,20 @@ export class EmbeddableMarkdownEditor {
 
         if (typeof this.editor.focus === 'function') {
             this.editor.focus();
+        }
+    }
+
+    /**
+     * Remove focus from the editor
+     */
+    blur(): void {
+        if (!this.editor) return;
+
+        if (typeof this.editor.blur === 'function') {
+            this.editor.blur();
+        } else if (this.editor.cm && this.editor.cm.dom) {
+            // For CodeMirror, blur the DOM element
+            this.editor.cm.dom.blur();
         }
     }
 

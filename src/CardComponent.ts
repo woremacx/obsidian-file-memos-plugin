@@ -526,35 +526,16 @@ export class CardComponent {
 			this.component,
 			{
 				app: this.app,
-				initialValue: editableContent
+				initialValue: editableContent,
+				onBlur: (editor) => {
+					// Auto-save when focus is lost
+					const content = editor.getValue().trim();
+					if (content) {
+						this.saveEdit(content);
+					}
+				}
 			}
 		);
-
-		// Add save/cancel buttons
-		const buttonsEl = this.contentEl.createEl('div', {
-			cls: 'memos-edit-buttons'
-		});
-
-		const saveBtn = buttonsEl.createEl('button', {
-			cls: 'memos-edit-save',
-			text: 'Save'
-		});
-
-		const cancelBtn = buttonsEl.createEl('button', {
-			cls: 'memos-edit-cancel',
-			text: 'Cancel'
-		});
-
-		saveBtn.addEventListener('click', () => {
-			if (this.editEditor) {
-				this.saveEdit(this.editEditor.getValue());
-			}
-		});
-
-		cancelBtn.addEventListener('click', () => {
-			this.editing = false;
-			this.exitEditMode();
-		});
 
 		// Focus on editor
 		if (this.editEditor) {
@@ -610,7 +591,7 @@ export class CardComponent {
 			this.onEdit(this.blockIndex, newContent);
 		}
 		this.editing = false;
-		// Note: exitEditMode will be called after the parent updates the block
+		this.exitEditMode();
 	}
 
 	private handleDelete(): void {
